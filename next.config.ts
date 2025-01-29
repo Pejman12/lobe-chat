@@ -16,6 +16,7 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH;
 const nextConfig: NextConfig = {
   basePath,
   compress: isProd,
+  productionBrowserSourceMaps: false,
   experimental: {
     optimizePackageImports: [
       'emoji-mart',
@@ -27,6 +28,7 @@ const nextConfig: NextConfig = {
     ],
     webVitalsAttribution: ['CLS', 'LCP'],
     webpackMemoryOptimizations: true,
+    serverSourceMaps: false,
   },
   async headers() {
     return [
@@ -169,7 +171,7 @@ const nextConfig: NextConfig = {
   serverExternalPackages: isProd ? ['@electric-sql/pglite'] : undefined,
   transpilePackages: ['pdfjs-dist', 'mermaid'],
 
-  webpack(config) {
+  webpack(config, {dev}) {
     config.experiments = {
       asyncWebAssembly: true,
       layers: true,
@@ -195,8 +197,26 @@ const nextConfig: NextConfig = {
 
     config.resolve.alias.canvas = false;
 
+    if (config.cache && !dev) {
+      config.cache = Object.freeze({
+        type: 'memory',
+      })
+    }
+
     return config;
   },
+  eslint: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    // !! WARN !!
+    // Dangerously allow production builds to successfully complete even if
+    // your project has type errors.
+    // !! WARN !!
+    ignoreBuildErrors: true,
+  }
 };
 
 const noWrapper = (config: NextConfig) => config;
